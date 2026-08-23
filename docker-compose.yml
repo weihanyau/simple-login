@@ -1,0 +1,17 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4321}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
+    ports:
+      - "${FRONTEND_PORT:-4321}:4321"
+    depends_on:
+      - backend
