@@ -19,6 +19,7 @@ const sessions = new Map(); // token -> username
 let nextTokenId = 1;
 
 app.use(express.json());
+app.set("trust proxy", process.env.TRUST_PROXY === "true");
 app.use(
   cors({
     origin: CORS_ORIGIN,
@@ -63,7 +64,8 @@ app.post("/api/login", (req, res) => {
 
   res.cookie("session", token, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: process.env.COOKIE_SAMESITE ?? "lax", // "none" for cross-site (requires secure)
+    secure: process.env.COOKIE_SECURE === "true",
     maxAge: 1000 * 60 * 60, // 1 hour
   });
 
