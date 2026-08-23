@@ -6,9 +6,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-ARG PUBLIC_API_URL=http://localhost:3001
-ENV PUBLIC_API_URL=$PUBLIC_API_URL
-RUN echo "[debug] building frontend with PUBLIC_API_URL=$PUBLIC_API_URL"
+ARG PUBLIC_API_URLS=http://localhost:3001
+ENV PUBLIC_API_URLS=$PUBLIC_API_URLS
+RUN echo "[debug] building frontend with PUBLIC_API_URLS=$PUBLIC_API_URLS"
 
 COPY . .
 RUN npm run build

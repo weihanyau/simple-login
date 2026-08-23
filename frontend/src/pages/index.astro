@@ -1,128 +1,29 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { api } from "../lib/api";
+
+const rawUrls = import.meta.env.PUBLIC_API_URLS ?? "";
+const apiUrls = rawUrls
+	.split(",")
+	.map((u) => u.trim())
+	.filter(Boolean)
+	.map((apiUrl, i) => ({ apiUrl, path: `/domain-${i + 1}/` }));
 ---
 
 <Layout title="Simple Login Demo">
 	<main>
 		<h1>Simple Login Demo</h1>
-
-		<section class="card">
-			<h2>Pre-Auth: Public API Data</h2>
-			<pre id="public-data">Loading…</pre>
-			<button type="button" id="reload-public">Reload Public Data</button>
-		</section>
-
-		<section class="card" id="login-card">
-			<h2>Login</h2>
-			<form id="login-form">
-				<label>
-					Username
-					<input name="username" value="demo" required />
-				</label>
-				<label>
-					Password
-					<input name="password" type="password" value="password123" required />
-				</label>
-				<button type="submit">Log In</button>
-			</form>
-			<p class="hint">
-				Hardcoded accounts: <code>demo / password123</code>,
-				<code>admin / admin123</code>
-			</p>
-			<p id="login-error" class="error" hidden></p>
-		</section>
-
-		<section class="card" id="authed-card" hidden>
-			<h2>Post-Auth: Protected Data</h2>
-			<div id="user-info"></div>
-			<pre id="private-data">Loading…</pre>
-			<button type="button" id="logout-btn">Log Out</button>
-		</section>
+		<p class="hint">
+			One demo page per API URL configured in <code>PUBLIC_API_URLS</code>:
+		</p>
+		<ul>
+			{apiUrls.map(({ apiUrl, path }) => (
+				<li>
+					<a href={path}>{path}</a> → <code>{apiUrl}</code>
+				</li>
+			))}
+		</ul>
 	</main>
 </Layout>
-
-<script>
-	import { api, setToken } from "../lib/api";
-
-	const publicData = document.getElementById("public-data");
-	const loginCard = document.getElementById("login-card");
-	const authedCard = document.getElementById("authed-card");
-	const userInfo = document.getElementById("user-info");
-	const privateData = document.getElementById("private-data");
-	const loginError = document.getElementById("login-error");
-
-	async function loadPublicData() {
-		publicData.textContent = "Loading…";
-		try {
-			const data = await api("/api/public/info");
-			publicData.textContent = JSON.stringify(data, null, 2);
-		} catch (err) {
-			publicData.textContent = `Error: ${err.message}`;
-		}
-	}
-
-	async function loadPrivateData() {
-		privateData.textContent = "Loading…";
-		try {
-			const [me, dashboard] = await Promise.all([
-				api("/api/me"),
-				api("/api/private/dashboard"),
-			]);
-			userInfo.textContent = `Logged in as: ${me.user.displayName} (@${me.user.username}, role: ${me.user.role})`;
-			privateData.textContent = JSON.stringify(dashboard, null, 2);
-		} catch (err) {
-			showLoginState(false);
-		}
-	}
-
-	function showLoginState(loggedIn) {
-		loginCard.hidden = loggedIn;
-		authedCard.hidden = !loggedIn;
-		if (loggedIn) loadPrivateData();
-		else loginError.hidden = true;
-	}
-
-	document.getElementById("login-form").addEventListener("submit", async (e) => {
-		e.preventDefault();
-		loginError.hidden = true;
-		const form = new FormData(e.currentTarget);
-		try {
-			const data = await api("/api/login", {
-				method: "POST",
-				body: JSON.stringify({
-					username: form.get("username"),
-					password: form.get("password"),
-				}),
-			});
-			setToken(data.token);
-			showLoginState(true);
-		} catch (err) {
-			loginError.textContent = err.message;
-			loginError.hidden = false;
-		}
-	});
-
-	document.getElementById("logout-btn").addEventListener("click", async () => {
-		try {
-			await api("/api/logout", { method: "POST" });
-		} catch {
-			// token may already be invalid
-		}
-		setToken(null);
-		loadPublicData();
-		showLoginState(false);
-	});
-
-	document.getElementById("reload-public").addEventListener("click", loadPublicData);
-
-	// Check existing session on page load (cookie-based)
-	api("/api/me")
-		.then(() => showLoginState(true))
-		.catch(() => showLoginState(false));
-
-	loadPublicData();
-</script>
 
 <style>
 	main {
@@ -134,49 +35,10 @@ import { api } from "../lib/api";
 	h1 {
 		text-align: center;
 	}
-	.card {
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 1.5rem;
-		margin-bottom: 1.5rem;
-	}
-	label {
-		display: block;
-		margin-bottom: 0.75rem;
-		font-weight: 600;
-	}
-	input {
-		display: block;
-		width: 100%;
-		margin-top: 0.25rem;
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		box-sizing: border-box;
-	}
-	button {
-		padding: 0.5rem 1rem;
-		cursor: pointer;
-		margin-top: 0.5rem;
-	}
-	pre {
-		background: #f6f6f6;
-		padding: 0.75rem;
-		border-radius: 4px;
-		overflow-x: auto;
-		min-height: 3rem;
-	}
-	.error {
-		color: #c0392b;
-		font-weight: 600;
-	}
 	.hint {
 		color: #666;
-		font-size: 0.875rem;
 	}
-	#user-info {
-		margin-bottom: 0.75rem;
-		font-weight: 600;
-		color: #2c7a39;
+	code {
+		word-break: break-all;
 	}
 </style>
