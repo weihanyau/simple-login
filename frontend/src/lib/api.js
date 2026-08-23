@@ -1,10 +1,22 @@
 const API = import.meta.env.PUBLIC_API_URL ?? "http://localhost:3001";
 
+let token = localStorage.getItem("auth_token");
+
+export function setToken(value) {
+	token = value;
+	if (value) localStorage.setItem("auth_token", value);
+	else localStorage.removeItem("auth_token");
+}
+
+export function getToken() {
+	return token;
+}
+
 export async function api(path, options = {}) {
 	const res = await fetch(`${API}${path}`, {
-		credentials: "include",
 		headers: {
 			"Content-Type": "application/json",
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
 			...(options.headers ?? {}),
 		},
 		...options,

@@ -1,5 +1,4 @@
 const express = require("express");
-const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 const app = express();
@@ -19,18 +18,18 @@ const sessions = new Map(); // token -> username
 let nextTokenId = 1;
 
 app.use(express.json());
-app.set("trust proxy", process.env.TRUST_PROXY === "true");
 app.use(
   cors({
     origin: CORS_ORIGIN,
-    credentials: true,
+    // Authorization header is not a credentialed request; no cookies involved
+    credentials: false,
   })
 );
-app.use(cookieParser());
 
 function getSessionUser(req) {
-  const token = req.cookies.session;
-  if (!token) return null;
+  const auth = req.headers.authorization ?? "";
+  const [scheme, token] = auth.split(" ");
+  if (scheme !== "Bearer" || !token) return null;
   const username = sessions.get(token);
   if (!username) return null;
   const user = USERS[username];
@@ -62,40 +61,36 @@ app.post("/api/login", (req, res) => {
   const token = `token_${nextTokenId++}_${Date.now()}`;
   sessions.set(token, username);
 
-  res.cookie("session", token, {
-    httpOnly: true,
-    sameSite: process.env.COOKIE_SAMESITE ?? "lax", // "none" for cross-site (requires secure)
-    secure: process.env.COOKIE_SECURE === "true",
-    maxAge: 1000 * 60 * 60, // 1 hour
-  });
-
   res.json({
     message: "Logged in successfully",
+    token,
     user: { username, displayName: user.displayName, role: user.role },
   });
 });
 
 // --- Post-auth (protected) endpoints ---
 
-app.post("/api/logout", (req, res) => {
-  const token = req.cookies.session;
-  if (token) sessions.delete(token);
-  res.clearCookie("session");
+function requireAuth(req, res, next) {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  req.sessionUser = sessionUser;
+  next();
+}
+
+app.post("/api/logout", requireAuth, (req, res) => {
+  sessions.delete(req.headers.authorization.split(" ")[1]);
   res.json({ message: "Logged out successfully" });
 });
 
-app.get("/api/me", (req, res) => {
-  const sessionUser = getSessionUser(req);
-  if (!sessionUser) return res.status(401).json({ error: "Not authenticated" });
-  res.json({ user: sessionUser });
+app.get("/api/me", requireAuth, (req, res) => {
+  res.json({ user: req.sessionUser });
 });
 
-app.get("/api/private/dashboard", (req, res) => {
-  const sessionUser = getSessionUser(req);
-  if (!sessionUser) return res.status(401).json({ error: "Not authenticated" });
-
+app.get("/api/private/dashboard", requireAuth, (req, res) => {
   res.json({
-    message: `Secret dashboard for ${sessionUser.displayName}`,
+    message: `Secret dashboard for ${req.sessionUser.displayName}`,
     loginCount: sessions.size,
     secretItems: [
       { id: 1, name: "Classified Report A", level: "top-secret" },
@@ -109,11 +104,5 @@ app.listen(PORT, () => {
   console.log(`Backend API running at http://localhost:${PORT}`);
   console.log(`[debug] PORT=${PORT}`);
   console.log(`[debug] CORS_ORIGIN=${JSON.stringify(CORS_ORIGIN)}`);
-  console.log(
-    `[debug] COOKIE_SECURE=${process.env.COOKIE_SECURE ?? "(unset, default false)"}`
-  );
-  console.log(
-    `[debug] COOKIE_SAMESITE=${process.env.COOKIE_SAMESITE ?? "(unset, default lax)"}`
-  );
-  console.log(`[debug] TRUST_PROXY=${process.env.TRUST_PROXY ?? "(unset, default false)"}`);
+  console.log(`[debug] auth mode: Authorization Bearer header`);
 });
