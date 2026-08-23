@@ -21,6 +21,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
+# needed at runtime so preview picks up ALLOWED_HOSTS
+COPY --from=build /app/astro.config.mjs ./astro.config.mjs
 
 EXPOSE 4321
 
