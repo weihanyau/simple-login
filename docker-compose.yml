@@ -11,6 +11,8 @@ services:
       context: ./frontend
       args:
         PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
+    environment:
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-}
     ports:
       - "${FRONTEND_PORT:-4321}:4321"
     depends_on:
