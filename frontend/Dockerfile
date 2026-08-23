@@ -8,6 +8,7 @@ RUN npm ci
 
 ARG PUBLIC_API_URL=http://localhost:3001
 ENV PUBLIC_API_URL=$PUBLIC_API_URL
+RUN echo "[debug] building frontend with PUBLIC_API_URL=$PUBLIC_API_URL"
 
 COPY . .
 RUN npm run build

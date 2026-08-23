@@ -107,5 +107,13 @@ app.get("/api/private/dashboard", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Backend API running at http://localhost:${PORT}`);
-  console.log(`Allowed CORS origins: ${CORS_ORIGIN.join(", ")}`);
+  console.log(`[debug] PORT=${PORT}`);
+  console.log(`[debug] CORS_ORIGIN=${JSON.stringify(CORS_ORIGIN)}`);
+  console.log(
+    `[debug] COOKIE_SECURE=${process.env.COOKIE_SECURE ?? "(unset, default false)"}`
+  );
+  console.log(
+    `[debug] COOKIE_SAMESITE=${process.env.COOKIE_SAMESITE ?? "(unset, default lax)"}`
+  );
+  console.log(`[debug] TRUST_PROXY=${process.env.TRUST_PROXY ?? "(unset, default false)"}`);
 });
