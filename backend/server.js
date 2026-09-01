@@ -18,6 +18,7 @@ const sessions = new Map(); // token -> username
 let nextTokenId = 1;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: CORS_ORIGIN,
@@ -47,6 +48,39 @@ app.get("/api/public/info", (req, res) => {
       activeSessions: sessions.size,
     },
   });
+});
+
+app.post("/api/public/contact", (req, res) => {
+  const { name, email, message, origin } = req.body || {};
+  const back = origin || "javascript:history.back()";
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  if (!name || !email || !message) {
+    return res.status(400).send(`<!DOCTYPE html><html><head><title>Contact Error</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:2rem auto;padding:0 1rem}.error{color:#c0392b;font-weight:600}a{display:inline-block;margin-top:1rem;text-decoration:none;padding:0.5rem 1rem;background:#c0392b;color:#fff;border-radius:4px}</style></head><body><h1>Contact Form</h1><p class="error">Error: name, email, and message are all required.</p><a href="${esc(back)}">Back to form</a></body></html>`);
+  }
+
+  if (typeof name !== "string" || typeof email !== "string" || typeof message !== "string") {
+    return res.status(400).send(`<!DOCTYPE html><html><head><title>Contact Error</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:2rem auto;padding:0 1rem}.error{color:#c0392b;font-weight:600}a{display:inline-block;margin-top:1rem;text-decoration:none;padding:0.5rem 1rem;background:#c0392b;color:#fff;border-radius:4px}</style></head><body><h1>Contact Form</h1><p class="error">Error: name, email, and message must be strings.</p><a href="${esc(back)}">Back to form</a></body></html>`);
+  }
+
+  if (name.trim().length === 0 || email.trim().length === 0 || message.trim().length === 0) {
+    return res.status(400).send(`<!DOCTYPE html><html><head><title>Contact Error</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:2rem auto;padding:0 1rem}.error{color:#c0392b;font-weight:600}a{display:inline-block;margin-top:1rem;text-decoration:none;padding:0.5rem 1rem;background:#c0392b;color:#fff;border-radius:4px}</style></head><body><h1>Contact Form</h1><p class="error">Error: name, email, and message must not be empty.</p><a href="${esc(back)}">Back to form</a></body></html>`);
+  }
+
+  const serverTime = new Date().toISOString();
+
+  res.send(`<!DOCTYPE html>
+<html>
+<head><title>Contact Confirmation</title>
+<style>body{font-family:system-ui,sans-serif;max-width:600px;margin:2rem auto;padding:0 1rem}pre{background:#f6f6f6;padding:.75rem;border-radius:4px;overflow-x:auto}.success{color:#2c7a39;font-weight:600}a{display:inline-block;margin-top:1rem;text-decoration:none;padding:0.5rem 1rem;background:#2c7a39;color:#fff;border-radius:4px}</style>
+</head>
+<body>
+<h1>Contact Confirmation</h1>
+<p class="success">Your message has been received!</p>
+<pre>${esc(JSON.stringify({ received: true, data: { name: name.trim(), email: email.trim(), message: message.trim() }, serverTime }, null, 2))}</pre>
+<a href="${esc(back)}">Back to form</a>
+</body>
+</html>`);
 });
 
 app.post("/api/login", (req, res) => {

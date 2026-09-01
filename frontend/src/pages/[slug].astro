@@ -48,6 +48,26 @@ const pageTitle = `Simple Login Demo — ${apiUrl}`;
 			<p id="login-error" class="error" hidden></p>
 		</section>
 
+		<section class="card" id="contact-card">
+			<h2>Contact Form Demo</h2>
+			<form method="POST" action="{apiUrl}/api/public/contact">
+				<input type="hidden" name="origin" value={Astro.url.href} />
+				<label>
+					Name
+					<input name="name" value="John Doe" required />
+				</label>
+				<label>
+					Email
+					<input name="email" type="email" value="john@example.com" required />
+				</label>
+				<label>
+					Message
+					<textarea name="message" rows="4" required>Hello from the form demo!</textarea>
+				</label>
+				<button type="submit">Send Message</button>
+			</form>
+		</section>
+
 		<section class="card" id="authed-card" hidden>
 			<h2>Post-Auth: Protected Data</h2>
 			<div id="user-info"></div>
@@ -173,7 +193,7 @@ const pageTitle = `Simple Login Demo — ${apiUrl}`;
 		margin-bottom: 0.75rem;
 		font-weight: 600;
 	}
-	input {
+	input, textarea {
 		display: block;
 		width: 100%;
 		margin-top: 0.25rem;
@@ -181,6 +201,7 @@ const pageTitle = `Simple Login Demo — ${apiUrl}`;
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		box-sizing: border-box;
+		font-family: inherit;
 	}
 	button {
 		padding: 0.5rem 1rem;
