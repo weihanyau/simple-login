@@ -112,6 +112,11 @@ const pageTitle = `Simple Login Demo — ${apiUrl}`;
 					username: form.get("username"),
 					password: form.get("password"),
 				}),
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(root?.dataset.apiUrl.includes("weihanyau.qzz.io") ? {} :{ "Akamai-BM-Telemetry": bmak.get_telemetry() })
+                },
+                credentials: root?.dataset.apiUrl.includes("weihanyau.qzz.io") ? "include" : "same-origin"
 			});
 			setToken(data.token);
 			showLoginState(true);

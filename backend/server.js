@@ -21,8 +21,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: CORS_ORIGIN,
-    // Authorization header is not a credentialed request; no cookies involved
-    credentials: false,
+    credentials: true,
   })
 );
 
@@ -51,6 +50,7 @@ app.get("/api/public/info", (req, res) => {
 });
 
 app.post("/api/login", (req, res) => {
+    console.log(req.body);
   const { username, password } = req.body || {};
   const user = USERS[username];
 
